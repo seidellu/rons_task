@@ -26,9 +26,13 @@ if __name__ == "__main__":
     methode = "greedy"
     #methode = "random"
     #number of transporter up to 6 possible
-    number_of_transporter = 1
+    number_of_transporter = 5
     #stores the transporter
     transporter_list:list[Transporter] = []
+    #tracks the costs
+    overall_costs = 0
+    #flag to show transition
+    show_transition = False
 
     #spawn transporter
     for id in range(1,number_of_transporter+1):
@@ -39,17 +43,20 @@ if __name__ == "__main__":
     while(1):
         for transporter in transporter_list:
             #transporter does a move
-            node_dict, transition = transporter.evaluate_step(node_dict, methode)
+            node_dict, transition, step_cost = transporter.evaluate_step(node_dict, methode)
+            overall_costs += step_cost
             #if transition is none there are no more links left
             if transition is None:
                 break
             else:
-                print(transition)
+                if show_transition:
+                    print(transition)
                 history.append(transition)
         if transition is None:
             break
-        
+
     print("No more links are left to work on")
+    print(f"""The "{methode}" methode with {number_of_transporter} transporter terminated with costs of: {round(overall_costs, 4)}""")
     print("Export the transitions as txt")
-    generate_txt_from_transitions(history, path_to_result, f"num_trans_{number_of_transporter}")
+    generate_txt_from_transitions(history, path_to_result, f"num_trans_{number_of_transporter}_methode_{methode}")
     print("End script")
