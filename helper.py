@@ -18,6 +18,14 @@ class Transition():
     loaded: int
 
     def __init__(self, fzg_id: int, node_name: int, unloaded: bool, loaded: bool) -> None:
+        """Simple dataclass to store the transitions which the transporters did.
+
+        Args:
+            fzg_id (int): id of the transporter
+            node_name (int): id of the node
+            unloaded (bool): flag if the transporter got unnloaded
+            loaded (bool): flag if the transporter got loaded
+        """
         self.fzg_id = fzg_id
         self.node_id = node_name
         self.unloaded = int(unloaded)
@@ -27,13 +35,26 @@ class Transition():
         return f"{self.fzg_id},{self.node_id},{self.unloaded},{self.loaded}\n"
 
 class WrongLink(Exception):
+
     def __init__(self, msg="Tried to add wrong link you idiot."):
+        """Execption to show that a Wrong Link was tried to use.
+
+        Args:
+            msg (str, optional): shown message. Defaults to "Tried to add wrong link you idiot.".
+        """
         self.msg = msg
         super().__init__(self.msg)
 
 
 class Node:
     def __init__(self, x_pos: int, y_pos: int, name: int) -> None:
+        """Simple class to generate nodes. A node has a name and a position in a 2D map.
+
+        Args:
+            x_pos (int): x position
+            y_pos (int): y position
+            name (int): name of the node
+        """
         self.x_pos = x_pos
         self.y_pos = y_pos
         self.name = name
@@ -79,6 +100,13 @@ class Node:
 
 class Link:
     def __init__(self, start_node: Node, end_node: Node) -> None:
+        """Simple class to creat a link between two nodes an computes its costs as a eucilidan distance in a 2D map.
+        Links are unnidrict, which has no effect to euclidian distance.
+
+        Args:
+            start_node (Node): start node of the link
+            end_node (Node): destination node of the link
+        """
         self.start_node = start_node
         self.end_node = end_node
         self.costs = self._compute_costs(start_node, end_node)
@@ -124,6 +152,13 @@ class Link:
 class Transporter:
 
     def __init__(self, id: int, start_node: Node, loaded: bool) -> None:
+        """Class to simulate a transporter which can work on a demand. 
+
+        Args:
+            id (int): id of the transporter
+            start_node (Node): node where the transporter starts
+            loaded (bool): indicates if the transporter is loaded
+        """
         self.id = id
         self.current_node = start_node
         self.loaded = loaded
@@ -139,10 +174,7 @@ class Transporter:
             Union[Tuple[dict, None], Tuple[dict, Transition]]: return the manipulated nodes_dict and the made transition or if no transition is left nodes_dict and None
         """
         #if the transporter is currenty loaded it will unloade its package
-        if self.loaded:
-            unloaded = True
-        else:
-            unloaded = False
+        unloaded = self._check_loading()
         #check if a package can be loaded
         if self.current_node.number_of_links != 0:
             self.loaded = True
@@ -164,12 +196,7 @@ class Transporter:
             #if greedy choose the nearest node which has links left
             if methode=="greedy":
                 #get nearest node
-                best_value = 999999
-                for node_with_link in nodes_with_links:
-                    current_cost = Link.compute_costs(self.current_node, node_with_link)
-                    if current_cost < best_value:
-                        next_node = node_dict[node_with_link.name]
-                        best_value = current_cost
+                next_node = self._get_nearst_node()
             else:
                 #if random choose a random node to go to
                 next_node = node_dict[nodes_with_links[random.randint(0, len(nodes_with_links)-1)].name]
@@ -178,6 +205,36 @@ class Transporter:
         #update node
         self.current_node = next_node
         return node_dict, trans
+
+    def _check_loading(self) -> bool:
+        """Checks if the transporter can be unloaded.
+
+        Returns:
+            bool: unloading status
+        """
+        if self.loaded:
+            return True
+        else:
+            return False
+
+    def _get_nearst_node(self, node_list: list[Node], node_dict: dict[int, Node]) -> Node:
+        """Gets the nearst node base on the current transporter position.
+
+        Args:
+            node_list (list[Node]): list of nodes to evaluate
+            node_dict (dict[int, Node]): dict of all nodes
+
+        Returns:
+            Node: neastes node
+        """
+        best_value = 999999
+        for node_with_link in node_list:
+            current_cost = Link.compute_costs(self.current_node, node_with_link)
+            if current_cost < best_value:
+                next_node = node_dict[node_with_link.name]
+                best_value = current_cost
+        return next_node
+
 
 def generate_links_from_txt(nodes: list, path: Path) -> dict:
     """Generates for a given list of nodes and a path to a transport_demand.txt a dict of nodes 
