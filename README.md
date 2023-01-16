@@ -2,7 +2,7 @@
 
 A short and dirty implementation of a two methods to solve rons task.
 
-This implements a greedy and a radom approach to solve the demanding list.
+This implements a greedy and a random approach to solve the demanding list.
 
 Since you do not handed me the demanding list i dont know if these programm parts match to your condition. Maybe you have to use my version, i just copied it from the screenshot, or adjust the function "generate_links_from_txt"
 
