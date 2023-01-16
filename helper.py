@@ -163,7 +163,7 @@ class Transporter:
         self.current_node = start_node
         self.loaded = loaded
 
-    def evaluate_step(self, node_dict: dict[int, Node], methode: str) -> Union[Tuple[dict, None], Tuple[dict, Transition]]:
+    def evaluate_step(self, node_dict: dict[int, Node], methode: str) -> Union[Tuple[dict, None, float], Tuple[dict, Transition, float]]:
         """Performs either one random or greedy step in his current position.
 
         Args:
@@ -184,6 +184,7 @@ class Transporter:
             else:
                 next_link = self.current_node.get_random_link()
             next_node = node_dict[next_link.end_node.name]
+            step_cost = next_link.costs
         else:
             #current node has no remaining links
             #transporter could not be loaded
@@ -192,19 +193,20 @@ class Transporter:
             nodes_with_links = [node for name, node in node_dict.items() if node.number_of_links > 0]
             #terminate if there are no nodes with links left
             if len(nodes_with_links) == 0:
-                return node_dict, None
+                return node_dict, None, 0.0
             #if greedy choose the nearest node which has links left
             if methode=="greedy":
                 #get nearest node
-                next_node = self._get_nearst_node()
+                next_node, step_cost = self._get_nearst_node(nodes_with_links, node_dict)
             else:
                 #if random choose a random node to go to
                 next_node = node_dict[nodes_with_links[random.randint(0, len(nodes_with_links)-1)].name]
+                step_cost = Link.compute_costs(self.current_node, next_node)
         #generate transition
         trans = Transition(self.id, self.current_node.name, unloaded, self.loaded)
         #update node
         self.current_node = next_node
-        return node_dict, trans
+        return node_dict, trans, step_cost
 
     def _check_loading(self) -> bool:
         """Checks if the transporter can be unloaded.
@@ -217,7 +219,7 @@ class Transporter:
         else:
             return False
 
-    def _get_nearst_node(self, node_list: list[Node], node_dict: dict[int, Node]) -> Node:
+    def _get_nearst_node(self, node_list: list[Node], node_dict: dict[int, Node]) -> Union[Node, float]:
         """Gets the nearst node base on the current transporter position.
 
         Args:
@@ -233,7 +235,7 @@ class Transporter:
             if current_cost < best_value:
                 next_node = node_dict[node_with_link.name]
                 best_value = current_cost
-        return next_node
+        return next_node, best_value
 
 
 def generate_links_from_txt(nodes: list, path: Path) -> dict:
